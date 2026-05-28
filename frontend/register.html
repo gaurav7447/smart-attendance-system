@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register User</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h2>Register User</h2>
+
+    <input type="text" id="name" placeholder="Enter Name">
+
+    <select id="profession">
+        <option value="student">Student</option>
+        <option value="teacher">Teacher</option>
+    </select>
+
+    <h3>Live Camera Capture</h3>
+
+    <video id="video" autoplay></video>
+
+    <button onclick="captureImage()">Capture Image</button>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <h3>OR Upload Existing Image</h3>
+
+    <input type="file" id="fileInput" accept="image/*">
+
+    <img id="preview">
+
+    <button onclick="registerUser()">Register User</button>
+
+    <p id="message"></p>
+
+</div>
+
+<script>
+
+const API_URL = 'https://tap0a0qze4.execute-api.ap-south-1.amazonaws.com';
+
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const preview = document.getElementById('preview');
+const fileInput = document.getElementById('fileInput');
+
+let capturedImage = '';
+
+navigator.mediaDevices.getUserMedia({
+    video: true
+})
+.then(stream => {
+    video.srcObject = stream;
+})
+.catch(err => {
+    console.log(err);
+});
+
+function captureImage() {
+
+    const context = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    context.drawImage(video, 0, 0);
+
+    capturedImage = canvas.toDataURL('image/jpeg');
+
+    preview.src = capturedImage;
+}
+
+fileInput.addEventListener('change', function(event) {
+
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        capturedImage = e.target.result;
+
+        preview.src = capturedImage;
+    };
+
+    reader.readAsDataURL(file);
+});
+
+async function registerUser() {
+
+    const name = document.getElementById('name').value;
+
+    const profession = document.getElementById('profession').value;
+
+    if (!name || !capturedImage) {
+
+        alert('Please enter name and capture/upload image');
+
+        return;
+    }
+
+    const imageBase64 = capturedImage.replace(
+        /^data:image\/(png|jpeg|jpg);base64,/,
+        ''
+    );
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/register`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name,
+                    profession,
+                    image: imageBase64
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        document.getElementById('message').style.color = '#4ade80';
+
+document.getElementById('message').innerText =
+    data.message || data.error;
+
+    } catch(error) {
+
+        console.log(error);
+        document.getElementById('message').style.color = '#f87171';
+        document.getElementById('message').innerText =
+            'Registration failed';
+    }
+}
+
+</script>
+
+</body>
+</html>
