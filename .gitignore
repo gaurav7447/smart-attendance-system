@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+
+# Zip Files
+*.zip
+
+# Images
+*.jpg
+*.jpeg
+*.png
+
+# VS Code
+.vscode/
+
+# Node
+node_modules/
+
+# Environment
+.env
